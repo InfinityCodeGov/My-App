@@ -2,13 +2,11 @@ package www.weybackmachine.com.myapp
 
 import android.app.DownloadManager
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowManager
+import android.view.WindowInsetsController
 import android.webkit.*
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -25,14 +23,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val insetsController = window.insetsController
-            insetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+            window.insetsController?.hide(WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE)
+            window.statusBarColor = resources.getColor(android.R.color.black)
+        } else {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            window.statusBarColor = resources.getColor(android.R.color.black)
         }
 
         linkHandler = LinkHandler(this)
         val webView: WebView = findViewById(R.id.webView)
 
+        // Configurações do WebView
         webView.settings.apply {
             javaScriptEnabled = true
             useWideViewPort = true
@@ -43,7 +46,20 @@ class MainActivity : AppCompatActivity() {
             domStorageEnabled = true
         }
 
+        // Definir User-Agent do Opera
+        val operaUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36 OPR/80.0.4170.64"
+        webView.settings.userAgentString = operaUserAgent
+
+        // Tornar o fundo da WebView preto
+        webView.setBackgroundColor(resources.getColor(android.R.color.black))
+
+        // Injetar código CSS para páginas com fundo preto
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                val js = "document.body.style.backgroundColor = 'black'; document.body.style.color = 'white';"
+                view.evaluateJavascript(js, null)
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
                 if (linkHandler.isBlocked(url)) {
@@ -55,6 +71,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Definir WebChromeClient
         webView.webChromeClient = object : WebChromeClient() {
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                 if (view == null) return
@@ -87,7 +104,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Iniciando download...", Toast.LENGTH_SHORT).show()
         }
 
-        webView.loadUrl("https://www.youtube.com/")
+        webView.loadUrl("https://www.flaticon.com/br/icone-gratis/escudo_3329139?term=escudo&related_id=3329139")
     }
 
     private fun exitFullScreen() {
